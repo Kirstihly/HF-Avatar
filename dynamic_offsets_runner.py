@@ -26,6 +26,8 @@ from utils.data_generation import UVPositionalMapGenerator
 from differential_optimization import DiffOptimRunner
 from pose_estimation import AposeEstimator
 
+PADDING = 5
+
 
 class GeoTrainer:
     def __init__(

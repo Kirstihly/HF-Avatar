@@ -19,6 +19,9 @@ from texture_model.lib import Get_sharpen, get_tex, save_tex
 from utils.data_generation import UVMapGenerator
 from utils.general import setup_seed, numpy2tensor, tensor2numpy
 
+PADDING = 5
+
+
 class BaseTrainer:
     def __init__(self, device, img_dir, uv_dir, ref_dir=None, name=None, length=None, batch_size=None, tmp_path='./results'):
         self.device = device
@@ -97,7 +100,7 @@ class NeuralTextureTrainer(BaseTrainer):
         ])
 
     def build_dataloader(self):
-        self.idx_list = ['{:04d}'.format(i) for i in range(1, self.length)]
+        self.idx_list = ['{}'.format(str(i).zfill(PADDING)) for i in range(1, self.length)]
         dataset = neural_rendering_train_dataset(self.img_dir, self.uv_dir, self.ref_dir,
                                                  self.idx_list, self.name, self.img_size)
         self.dataloader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True, num_workers=4)
@@ -158,12 +161,12 @@ class NeuralRenderingTrainer(BaseTrainer):
 
     def build_dataloader(self, mode = 'train'):
         if mode == 'train':
-            self.idx_list = ['{:04d}'.format(i) for i in range(1, self.length)]
+            self.idx_list = ['{}'.format(str(i).zfill(PADDING)) for i in range(1, self.length)]
             dataset = neural_rendering_train_dataset(self.img_dir, self.uv_dir, self.ref_dir, self.idx_list, self.name,
                                                      self.img_size)
             self.dataloader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True, num_workers=4)
         elif mode == 'test':
-            self.idx_list = ['{:04d}'.format(i) for i in range(1, 360)]
+            self.idx_list = ['{}'.format(str(i).zfill(PADDING)) for i in range(1, 360)]
             dataset = neural_rendering_test_dataset(self.img_dir, self.uv_dir, self.ref_dir, self.idx_list, self.name,
                                                     self.img_size)
             self.dataloader = DataLoader(dataset, batch_size=1, shuffle=False, num_workers=4)
@@ -279,7 +282,7 @@ class TexOptimizer(BaseTrainer):
     def build_dataloader(self):
         img_size = (self.img_size[0] * 2, self.img_size[1] * 2)
 
-        self.idx_list = ['{:04d}'.format(i) for i in range(1, 360)]
+        self.idx_list = ['{}'.format(str(i).zfill(PADDING)) for i in range(1, 360)]
         dataset = neural_rendering_finetune_dataset(self.img_dir, self.uv_dir, self.idx_list,
                                                     self.name, img_size=img_size,)
         self.dataloader = DataLoader(dataset, batch_size=self.batch_size, shuffle=False,num_workers=4)  #
@@ -347,7 +350,8 @@ if __name__ == '__main__':
     parser.add_argument('--root_dir', type=str, default='/mnt/8T/zh/vrc')
     parser.add_argument('--name', type=str, default='Body2D_2037_344')
     #   Body2D_2010_378 Body2D_2061_507   Body2D_2041_308  Body2D_2031_313 Body2D_2070_380
-    parser.add_argument('--device_id', type=str, default='2')
+    parser.add_argument('--device_id', type=str, default='0')
+    parser.add_argument("--tmp_path", type=str, default="./results")
     args = parser.parse_args()
 
     os.environ["CUDA_VISIBLE_DEVICES"] = args.device_id # '2'
@@ -372,7 +376,7 @@ if __name__ == '__main__':
     # process_flow = ['2', '3', '4']
     # process_flow = ['3', '4']
     # process_flow = ['4']
-    tmp_path = './results'
+    tmp_path = args.tmp_path
     src_path = f'{tmp_path}/dynamic_offsets/'  # new_diff_rendering
     img_path = f'{root_dir}/frames_mat/'
     uv_path, test_uv_path, double_test_uv_path = f'{tmp_path}/uvs/', f'{tmp_path}/test_uvs/', f'{tmp_path}/double_test_uvs/'
